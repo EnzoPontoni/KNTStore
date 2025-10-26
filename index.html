@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Fire Pass - Entrega Instantânea</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #000000 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            max-width: 420px;
+            width: 100%;
+        }
+        .logo { text-align: center; margin-bottom: 25px; }
+        .logo h1 {
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+        .logo p { color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 300; }
+        
+        /* --- ESTILOS PARA AS ABAS --- */
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 5px;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 9px;
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* --- ESTILOS DOS COMPONENTES INTERNOS --- */
+        .form-group { margin-bottom: 25px; }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-size: 16px;
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        }
+        input::placeholder, textarea::placeholder { color: rgba(255, 255, 255, 0.5); }
+        textarea { resize: vertical; min-height: 90px; }
+        .btn {
+            width: 100%;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+        .btn-buy {
+             background: #009ee3; /* Cor do Mercado Pago */
+             border-color: #007bb8;
+        }
+        .btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        .btn-buy:hover:not(:disabled) {
+            background: #007bb8;
+        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .status {
+            margin-top: 25px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        .status.success {
+            background: rgba(34, 197, 94, 0.15);
+            color: #ffffff;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        .status.error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ffffff;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .status.loading {
+            background: rgba(59, 130, 246, 0.15);
+            color: #ffffff;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .info {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            text-align: center;
+        }
+        .info strong { color: #ffffff; }
+        .key-display {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            user-select: all;
+            word-break: break-all;
+        }
+        /* --- ESTILOS PARA O QR CODE PIX --- */
+        .pix-container {
+            text-align: center;
+        }
+        .pix-container img {
+            max-width: 250px;
+            width: 100%;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            margin: 15px 0;
+        }
+        .pix-copy-code {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            font-family: monospace;
+            font-size: 12px;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+        .btn-copy {
+            width: auto;
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>FREE FIRE PASS</h1>
+            <p>ENTREGA INSTANTÂNEA</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" data-tab="buyContent">🛒 Comprar Passe</button>
+            <button class="tab-button" data-tab="redeemContent">🔑 Resgatar Key</button>
+        </div>
+
+        <!-- ABA DE COMPRA -->
+        <div id="buyContent" class="tab-content active">
+            <div class="info" id="productInfo">
+                <!-- As informações do produto serão carregadas aqui -->
+                <div class="loading-spinner"></div> Carregando...
+            </div>
+            <button class="btn btn-buy" id="buyButton" disabled>PAGAR COM PIX</button>
+        </div>
+
+        <!-- ABA DE RESGATE -->
+        <div id="redeemContent" class="tab-content">
+            <form id="passForm">
+                <div class="form-group">
+                    <label for="key">KEY DE RESGATE</label>
+                    <input type="text" id="key" name="key" required 
+                           placeholder="Ex: KNT-XXXX-XXXX-XXXX-XXXX">
+                </div>
+                <div class="form-group">
+                    <label for="playerId">ID DO JOGADOR</label>
+                    <input type="text" id="playerId" name="playerId" required 
+                           placeholder="Ex: 5205198330" maxlength="15">
+                </div>
+                <div class="form-group">
+                    <label for="message">MENSAGEM PERSONALIZADA (OPCIONAL)</label>
+                    <textarea id="message" name="message" 
+                              placeholder="Ex: Presente da KntStore"
+                              maxlength="100"></textarea>
+                </div>
+                <button type="submit" class="btn" id="submitBtn">RESGATAR PASSE AGORA</button>
+            </form>
+        </div>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        let paymentCheckInterval;
+
+        // --- LÓGICA DAS ABAS ---
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                tabContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(button.dataset.tab).classList.add('active');
+                statusDiv.style.display = 'none';
+            });
+        });
+
+        // --- LÓGICA DE COMPRA (PIX) ---
+        const buyButton = document.getElementById('buyButton');
+        const buyContent = document.getElementById('buyContent');
+        const productInfoDiv = document.getElementById('productInfo');
+
+        // FUNÇÃO PARA CARREGAR AS CONFIGURAÇÕES DO PRODUTO
+        const loadProductInfo = async () => {
+            try {
+                const response = await fetch('/api/carregar-config-publica');
+                if (!response.ok) throw new Error('Erro de servidor ao carregar produto.');
+                
+                const data = await response.json();
+                if (data.success) {
+                    const price = Number(data.data.productPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    productInfoDiv.innerHTML = `
+                        <strong>${data.data.productTitle} - ${price}</strong><br>
+                        Clique no botão abaixo para gerar um QR Code PIX e efetuar o pagamento.
+                    `;
+                    buyButton.disabled = false;
+                } else {
+                    productInfoDiv.innerHTML = 'Não foi possível carregar os detalhes do produto.';
+                }
+            } catch (error) {
+                console.error("Erro ao carregar info do produto:", error);
+                productInfoDiv.innerHTML = `Erro de conexão: ${error.message}`;
+            }
+        };
+
+        buyButton.addEventListener('click', async () => {
+            buyButton.disabled = true;
+            showStatus('loading', 'Gerando QR Code PIX...');
+            try {
+                const response = await fetch('/api/criar-pagamento', { method: 'POST' });
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Falha ao gerar o PIX.');
+                }
+                
+                buyContent.innerHTML = `
+                    <div class="info">
+                        <strong>Escaneie o QR Code abaixo com seu app do banco</strong>
+                    </div>
+                    <div class="pix-container">
+                        <img src="data:image/png;base64,${data.qrCodeImage}" alt="QR Code PIX">
+                        <p style="color: rgba(255,255,255,0.7); font-size: 14px; margin-bottom: 10px;">ou copie o código abaixo:</p>
+                        <div class="pix-copy-code">${data.qrCodeCopy}</div>
+                        <button class="btn btn-copy" id="copyBtn">Copiar Código</button>
+                    </div>
+                    <div class="info" style="margin-top: 20px;">
+                        <div class="loading-spinner"></div>
+                        Aguardando confirmação do pagamento...
+                    </div>
+                `;
+                statusDiv.style.display = 'none';    
+                
+                document.getElementById('copyBtn').addEventListener('click', () => {
+                    navigator.clipboard.writeText(data.qrCodeCopy);
+                    showStatus('success', 'Código PIX copiado!');
+                });
+
+                paymentCheckInterval = setInterval(() => checkPaymentStatus(data.paymentId), 5000);
+
+            } catch (error) {
+                console.error('Erro no processo de compra:', error);
+                showStatus('error', 'Erro ao gerar seu PIX. Tente novamente.');
+                buyButton.disabled = false;
+            }
+        });
+
+        async function checkPaymentStatus(paymentId) {
+            try {
+                const response = await fetch('/api/verificar-pagamento', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentId: paymentId })
+                });
+                if (!response.ok) return;
+                const data = await response.json();
+                if (data.status === 'approved') {
+                    clearInterval(paymentCheckInterval);
+                    buyContent.innerHTML = `
+                        <div class="info">
+                            <strong>Pagamento Aprovado!</strong><br>
+                            Sua chave de resgate é:
+                            <div class="key-display">${data.key}</div>
+                        </div>`;
+                    showStatus('success', 'Pagamento confirmado e chave gerada!');
+                }
+            } catch (error) {
+                console.error('Erro ao verificar status:', error);
+            }
+        }
+
+        // --- LÓGICA DE RESGATE DE KEY ---
+        const redeemForm = document.getElementById('passForm');
+        const submitBtn = document.getElementById('submitBtn');
+        redeemForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const key = document.getElementById('key').value.trim().toUpperCase();
+            const playerId = document.getElementById('playerId').value.trim();
+            const message = document.getElementById('message').value.trim() || 'Booyah!';
+            if (!key || !playerId) return showStatus('error', 'Preencha a Key e o ID do Jogador!');
+            if (!/^\d+$/.test(playerId)) return showStatus('error', 'O ID do jogador deve conter apenas números!');
+            
+            showStatus('loading', 'Validando e enviando o passe...');
+            submitBtn.disabled = true;
+            try {
+                const response = await fetch('/api/enviar-passe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key, player_id: playerId, message })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Erro no servidor');
+                showStatus('success', data.message || 'Passe enviado com sucesso!');
+                redeemForm.reset();
+            } catch (error) {
+                showStatus('error', error.message);
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        // --- FUNÇÃO DE STATUS ---
+        function showStatus(type, message) {
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = (type === 'loading') 
+                ? `<div class="loading-spinner"></div> ${message}` 
+                : message;
+            if (type !== 'loading') {
+                setTimeout(() => { statusDiv.style.display = 'none'; }, 6000);
+            }
+        }
+
+        document.getElementById('playerId').addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+
+        // INICIALIZA A PÁGINA
+        loadProductInfo();
+    </script>
+</body>
+</html>
+

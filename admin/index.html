@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KNT Admin - Gerenciador de Keys</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #000000 100%); 
+            min-height: 100vh; 
+            color: #fff; 
+            padding: 20px;
+        }
+        .container { max-width: 900px; width: 100%; margin: 40px auto; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+        .login-form { max-width: 400px; margin: 10vh auto; }
+        .admin-panel { display: none; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { 
+            font-size: 2.5rem; 
+            margin-bottom: 10px; 
+            color: #ffffff;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+        .header p { color: rgba(255, 255, 255, 0.7); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
+        .stat-card { text-align: center; padding: 20px; }
+        .stat-card h3 { font-size: 2.5rem; margin-bottom: 5px; color: #ffffff; }
+        .stat-card p { color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; }
+        .controls h2 { margin-bottom: 20px; font-weight: 400; color: #ffffff; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 200px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: rgba(255, 255, 255, 0.9); }
+        input, select { 
+            width: 100%; 
+            padding: 15px; 
+            background: rgba(255, 255, 255, 0.08); 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            border-radius: 12px; 
+            color: #fff; 
+            font-size: 1rem; 
+            transition: all 0.3s ease; 
+        }
+        input:focus, select:focus { 
+            outline: none; 
+            border-color: rgba(255, 255, 255, 0.4); 
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1); 
+        }
+        input::placeholder { color: rgba(255, 255, 255, 0.5); }
+        .btn { 
+            padding: 15px 25px; 
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff; 
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-weight: 500; 
+            font-size: 1rem;
+            transition: all 0.3s ease; 
+            backdrop-filter: blur(10px);
+        }
+        .btn:hover:not(:disabled) { 
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); 
+        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn.btn-danger {
+            background: rgba(220, 53, 69, 0.2);
+            border-color: rgba(220, 53, 69, 0.4);
+        }
+        .btn.btn-danger:hover:not(:disabled) {
+             background: rgba(220, 53, 69, 0.3);
+             border-color: rgba(220, 53, 69, 0.6);
+        }
+        .btn-small { padding: 5px 15px; font-size: 0.8rem; }
+        .keys-section { margin-top: 30px; }
+        .keys-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
+        #keysGrid { display: grid; gap: 15px; }
+        .key-card { 
+            background: rgba(0, 0, 0, 0.2); 
+            padding: 20px; 
+            border-radius: 10px; 
+            border-left: 4px solid rgba(255, 255, 255, 0.5); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 15px;
+        }
+        .key-card.used { border-left-color: #666; opacity: 0.7; }
+        .key-card.expired { border-left-color: #444; opacity: 0.6; }
+        .key-info h4 { margin-bottom: 5px; font-family: monospace; font-size: 1.1rem; word-break: break-all; }
+        .key-info p { font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); }
+        .key-actions { text-align: right; flex-shrink: 0; }
+        .status-badge { display: block; margin-bottom: 8px; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; background: rgba(0, 0, 0, 0.2); }
+        .status-available { color: #fff; }
+        .status-used { color: #aaa; }
+        .status-expired { color: #888; }
+        .alert { 
+            padding: 15px 20px; 
+            border-radius: 8px; 
+            margin-top: 20px; 
+            border: 1px solid;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .alert.success { color: #fff; border-color: rgba(34, 197, 94, 0.4); }
+        .alert.error { color: #ddd; border-color: rgba(239, 68, 68, 0.4); }
+        .spinner { border-top-color: #fff; }
+        .logout-btn { 
+            position: fixed; top: 20px; right: 20px;
+            background: rgba(255, 255, 255, 0.1); 
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 80px; text-align: center;
+        }
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .modal-backdrop.visible { display: flex; opacity: 1; }
+        .modal-content {
+            max-width: 450px; text-align: center;
+            transform: scale(0.95); transition: transform 0.3s ease;
+        }
+        .modal-backdrop.visible .modal-content { transform: scale(1); }
+        .modal-content h3 { font-size: 1.5rem; margin-bottom: 15px; font-weight: 400; }
+        .modal-content p { margin-bottom: 30px; color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 1rem; }
+        .modal-content p strong { font-family: monospace; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; word-break: break-all; }
+        .modal-actions { display: flex; justify-content: center; gap: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loginSection" class="glass-card login-form">
+            <div class="header"><h1>KNT ADMIN</h1><p>Painel de Controle</p></div>
+            <form id="loginForm">
+                <div class="form-group"><label for="username">Usuário</label><input type="text" id="username" name="username" required placeholder="Digite seu usuário"></div>
+                <div class="form-group" style="margin-bottom: 25px;"><label for="password">Senha</label><input type="password" id="password" name="password" required placeholder="Digite sua senha"></div>
+                <button type="submit" id="loginBtn" class="btn" style="width: 100%;">ENTRAR</button>
+            </form>
+            <div id="loginAlert"></div>
+        </div>
+        
+        <div id="adminPanel" class="admin-panel">
+            <button class="btn logout-btn" id="logoutBtn">Sair</button>
+            <div class="header"><h1>Painel Administrativo</h1><p>Gerenciamento de Keys</p></div>
+            <div class="stats-grid glass-card">
+                <div class="stat-card"><h3 id="statTotal">0</h3><p>Total</p></div>
+                <div class="stat-card"><h3 id="statAvailable">0</h3><p>Disponíveis</p></div>
+                <div class="stat-card"><h3 id="statUsed">0</h3><p>Utilizadas</p></div>
+                <div class="stat-card"><h3 id="statExpired">0</h3><p>Expiradas</p></div>
+            </div>
+            <div class="controls glass-card">
+                <h2>Gerar Novas Keys</h2>
+                <form id="generateKeysForm">
+                    <div class="form-row">
+                        <div class="form-group"><label for="quantity">Quantidade (1-100)</label><input type="number" id="quantity" value="10" min="1" max="100" required></div>
+                        <div class="form-group"><label for="expireDays">Validade (dias)</label><input type="number" id="expireDays" value="30" min="1" required></div>
+                        <div class="form-group" style="align-self: flex-end;"><button type="submit" id="generateBtn" class="btn">Gerar Keys</button></div>
+                    </div>
+                </form>
+                <div id="generateAlert"></div>
+            </div>
+            
+            <div class="controls glass-card">
+                <h2>Configurações do Produto</h2>
+                <form id="productSettingsForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productTitle">Título do Produto</label>
+                            <input type="text" id="productTitle" placeholder="Ex: Passe de Batalha Free Fire" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                         <div class="form-group">
+                            <label for="productPrice">Preço Normal (Ex: 19.99)</label>
+                            <input type="text" id="productPrice" placeholder="Use ponto para decimais" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productResellerPrice">Preço Revendedor (Ex: 15.00)</label>
+                            <input type="text" id="productResellerPrice" placeholder="Use ponto para decimais" required>
+                        </div>
+                    </div>
+                     <div class="form-row">
+                        <div class="form-group">
+                            <label for="resellerPassword">Senha de Acesso para Revendedores</label>
+                            <input type="password" id="resellerPassword" placeholder="Deixe em branco para não alterar">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="flex-grow: 0;">
+                            <button type="submit" id="saveSettingsBtn" class="btn">Salvar Configurações</button>
+                        </div>
+                    </div>
+                </form>
+                <div id="settingsAlert"></div>
+            </div>
+
+            <div class="keys-section glass-card">
+                <div class="keys-header">
+                    <h2>Lista de Keys</h2>
+                    <div class="filter-controls">
+                        <select id="filterStatus">
+                            <option value="all">Todas</option>
+                            <option value="available">Disponíveis</option>
+                            <option value="used">Utilizadas</option>
+                            <option value="expired">Expiradas</option>
+                        </select>
+                        <button class="btn" id="refreshBtn">Atualizar</button>
+                    </div>
+                </div>
+                <div id="keysGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal-backdrop">
+        <div class="glass-card modal-content">
+            <h3>Confirmar Exclusão</h3>
+            <p id="deleteModalText">Você tem certeza que deseja deletar a key permanentemente? Esta ação não pode ser desfeita.</p>
+            <div class="modal-actions">
+                <button id="cancelDeleteBtn" class="btn">Cancelar</button>
+                <button id="confirmDeleteBtn" class="btn btn-danger">Sim, Deletar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_BASE_URL = '/api/admin';
+            // ... (elementos do DOM)
+            const loginSection = document.getElementById('loginSection');
+            const adminPanel = document.getElementById('adminPanel');
+            const loginForm = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const loginAlert = document.getElementById('loginAlert');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const statTotal = document.getElementById('statTotal');
+            const statAvailable = document.getElementById('statAvailable');
+            const statUsed = document.getElementById('statUsed');
+            const statExpired = document.getElementById('statExpired');
+            const generateKeysForm = document.getElementById('generateKeysForm');
+            const generateBtn = document.getElementById('generateBtn');
+            const generateAlert = document.getElementById('generateAlert');
+            const keysGrid = document.getElementById('keysGrid');
+            const filterStatus = document.getElementById('filterStatus');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const deleteModal = document.getElementById('deleteModal');
+            const deleteModalText = document.getElementById('deleteModalText');
+            const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            const productSettingsForm = document.getElementById('productSettingsForm');
+            const productTitleInput = document.getElementById('productTitle');
+            const productPriceInput = document.getElementById('productPrice');
+            // ***** CORREÇÃO PRINCIPAL AQUI (1/2) *****
+            // Adicionamos a seleção dos novos campos do formulário
+            const productResellerPriceInput = document.getElementById('productResellerPrice');
+            const resellerPasswordInput = document.getElementById('resellerPassword');
+            const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+            const settingsAlert = document.getElementById('settingsAlert');
+            let keyToDelete = null;
+
+            // ... (funções auxiliares: getToken, setToken, etc.)
+            const getToken = () => localStorage.getItem('adminToken');
+            const setToken = (token) => localStorage.setItem('adminToken', token);
+            const removeToken = () => localStorage.removeItem('adminToken');
+            
+            const showAlert = (element, type, message) => {
+                element.innerHTML = `<div class="alert ${type}">${message}</div>`;
+                setTimeout(() => { element.innerHTML = ''; }, 5000);
+            };
+            
+            const toggleLoading = (button, isLoading, text = 'Aguarde...') => {
+                button.disabled = isLoading;
+                const originalText = button.dataset.defaultText || button.textContent;
+                if (!button.dataset.defaultText) button.dataset.defaultText = originalText;
+                button.innerHTML = isLoading ? `<span class="spinner" style="display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s linear infinite; margin-right: 8px; vertical-align: middle;"></span> ${text}` : originalText;
+            };
+            
+            const styleSheet = document.createElement("style");
+            styleSheet.type = "text/css";
+            styleSheet.innerText = "@keyframes spin { to { transform: rotate(360deg); } }";
+            document.head.appendChild(styleSheet);
+            
+            // ... (função de login)
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                toggleLoading(loginBtn, true, 'Verificando...');
+                try {
+                    const response = await fetch(`${API_BASE_URL}/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: loginForm.username.value, password: loginForm.password.value }) });
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        setToken(data.token);
+                        initAdminPanel();
+                    } else { showAlert(loginAlert, 'error', data.message || 'Credenciais inválidas.'); }
+                } catch (error) { showAlert(loginAlert, 'error', 'Erro de conexão.'); } finally { toggleLoading(loginBtn, false); }
+            };
+            
+            const handleLogout = () => {
+                removeToken();
+                window.location.reload();
+            };
+
+            // ... (funções de renderizar, buscar keys, etc.)
+            const renderKeys = (keys = []) => {
+                keysGrid.innerHTML = '';
+                if (keys.length === 0) {
+                    keysGrid.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.7);">Nenhuma key encontrada para este filtro.</p>';
+                    return;
+                }
+                keys.forEach(key => {
+                    let statusClass, statusText;
+                    const isExpired = new Date(key.expiresAt) < new Date();
+                    if (key.used === 'true') { statusClass = 'used'; statusText = 'Utilizada'; }
+                    else if (isExpired) { statusClass = 'expired'; statusText = 'Expirada'; }
+                    else { statusClass = 'available'; statusText = 'Disponível'; }
+                    
+                    keysGrid.innerHTML += `
+                        <div class="key-card ${statusClass}">
+                            <div class="key-info">
+                                <h4>${key.key}</h4>
+                                <p>Criada em: ${new Date(key.createdAt).toLocaleDateString('pt-BR')}</p>
+                                <p>Expira em: ${new Date(key.expiresAt).toLocaleString('pt-BR')}</p>
+                                ${key.usedBy ? `<p>Usada por ID: ${key.usedBy}</p>` : ''}
+                            </div>
+                            <div class="key-actions">
+                                <span class="status-badge status-${statusClass}">${statusText}</span>
+                                <button class="btn btn-danger btn-small delete-btn" data-key="${key.key}">Deletar</button>
+                            </div>
+                        </div>`;
+                });
+            };
+
+            const fetchKeysAndStats = async () => {
+                const token = getToken();
+                if (!token) return handleLogout();
+                keysGrid.innerHTML = '<span class="spinner" style="display: block; margin: 20px auto; width: 24px; height: 24px; border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s linear infinite;"></span>';
+                try {
+                    const status = filterStatus.value;
+                    const response = await fetch(`${API_BASE_URL}/list-keys?status=${status}&limit=500&_cacheBust=${Date.now()}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.status === 401) return handleLogout();
+                    const data = await response.json();
+                    if (data.success) {
+                        statTotal.textContent = data.stats.total;
+                        statAvailable.textContent = data.stats.available;
+                        statUsed.textContent = data.stats.used;
+                        statExpired.textContent = data.stats.expired;
+                        renderKeys(data.keys);
+                    } else { keysGrid.innerHTML = '<p>Falha ao buscar dados.</p>'; }
+                } catch (error) { keysGrid.innerHTML = '<p>Erro de conexão ao buscar dados.</p>'; }
+            };
+
+            const handleGenerateKeys = async (e) => {
+                e.preventDefault();
+                toggleLoading(generateBtn, true, 'Gerando...');
+                const token = getToken();
+                try {
+                    const response = await fetch(`${API_BASE_URL}/generate-keys`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ quantity: parseInt(generateKeysForm.quantity.value), expireDays: parseInt(generateKeysForm.expireDays.value) }) });
+                    if (response.status === 401) return handleLogout();
+                    const data = await response.json();
+                    if (data.success) {
+                        showAlert(generateAlert, 'success', `${data.count} keys geradas com sucesso!`);
+                        fetchKeysAndStats();
+                    } else { showAlert(generateAlert, 'error', data.message || 'Erro ao gerar keys.'); }
+                } catch (error) { showAlert(generateAlert, 'error', 'Erro de conexão.'); } finally { toggleLoading(generateBtn, false); }
+            };
+
+            const handleDeleteKey = async (key) => {
+                const token = getToken();
+                try {
+                    const response = await fetch(`${API_BASE_URL}/delete-key`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ key }) });
+                    const data = await response.json();
+                    if (data.success) {
+                        showAlert(generateAlert, 'success', data.message);
+                        fetchKeysAndStats();
+                    } else { showAlert(generateAlert, 'error', data.message || 'Erro ao deletar.'); }
+                } catch (error) { showAlert(generateAlert, 'error', 'Erro de conexão.'); }
+            };
+
+            const showModal = (key) => {
+                keyToDelete = key;
+                deleteModalText.innerHTML = `Você tem certeza que deseja deletar a key <br><strong>${keyToDelete}</strong>? <br>Esta ação não pode ser desfeita.`;
+                deleteModal.classList.add('visible');
+            };
+
+            const hideModal = () => {
+                deleteModal.classList.remove('visible');
+                keyToDelete = null;
+            };
+            
+            // Função para carregar as configurações
+            const loadProductSettings = async () => {
+                const token = getToken();
+                try {
+                    const response = await fetch(`${API_BASE_URL}/carregar-config`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.status === 401) return handleLogout();
+                    const data = await response.json();
+                    if (data.success) {
+                        productTitleInput.value = data.data.productTitle;
+                        productPriceInput.value = data.data.productPrice;
+                        productResellerPriceInput.value = data.data.productResellerPrice;
+                        resellerPasswordInput.value = data.data.resellerPassword;
+                    } else { showAlert(settingsAlert, 'error', 'Não foi possível carregar as configurações.'); }
+                } catch (error) { showAlert(settingsAlert, 'error', 'Erro de conexão ao carregar configurações.'); }
+            };
+
+            // Função para salvar as configurações
+            const handleSaveSettings = async (e) => {
+                e.preventDefault();
+                toggleLoading(saveSettingsBtn, true, 'Salvando...');
+                const token = getToken();
+                try {
+                    const response = await fetch(`${API_BASE_URL}/salvar-config`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        // ***** CORREÇÃO PRINCIPAL AQUI (2/2) *****
+                        // Garantimos que TODOS os campos sejam enviados no corpo da requisição
+                        body: JSON.stringify({ 
+                            productTitle: productTitleInput.value, 
+                            productPrice: productPriceInput.value,
+                            productResellerPrice: productResellerPriceInput.value,
+                            resellerPassword: resellerPasswordInput.value
+                        })
+                    });
+                     if (response.status === 401) return handleLogout();
+                    const data = await response.json();
+                    if (data.success) {
+                        showAlert(settingsAlert, 'success', data.message);
+                    } else { showAlert(settingsAlert, 'error', data.message || 'Erro ao salvar.'); }
+                } catch (error) { showAlert(settingsAlert, 'error', 'Erro de conexão ao salvar.'); } finally { toggleLoading(saveSettingsBtn, false); }
+            };
+
+            const initAdminPanel = () => {
+                loginSection.style.display = 'none';
+                adminPanel.style.display = 'block';
+                fetchKeysAndStats();
+                loadProductSettings();
+            };
+            
+            loginForm.addEventListener('submit', handleLogin);
+            logoutBtn.addEventListener('click', handleLogout);
+            generateKeysForm.addEventListener('submit', handleGenerateKeys);
+            refreshBtn.addEventListener('click', fetchKeysAndStats);
+            filterStatus.addEventListener('change', fetchKeysAndStats);
+            productSettingsForm.addEventListener('submit', handleSaveSettings);
+
+            keysGrid.addEventListener('click', (e) => {
+                if (e.target.closest('.delete-btn')) {
+                    showModal(e.target.closest('.delete-btn').dataset.key);
+                }
+            });
+            cancelDeleteBtn.addEventListener('click', hideModal);
+            confirmDeleteBtn.addEventListener('click', () => {
+                if (keyToDelete) handleDeleteKey(keyToDelete);
+                hideModal();
+            });
+
+            if (getToken()) {
+                initAdminPanel();
+            } else {
+                loginSection.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
+

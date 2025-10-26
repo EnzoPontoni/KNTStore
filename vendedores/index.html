@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Revendedor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1a1c23;
+            --bg-light: #2a2d35;
+            --bg-dark: #14161b;
+            --primary: #5e5ce6;
+            --text-color: #e4e4e7;
+            --text-muted: #a1a1aa;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --success: #22c55e;
+            --danger: #ef4444;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+
+        /* --- TELA DE LOGIN --- */
+        #loginSection {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .login-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+            background-color: var(--bg-light);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .login-box h1 {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        /* --- LAYOUT DO PAINEL --- */
+        #panelSection { display: none; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        header h1 { font-size: 1.8rem; font-weight: 600; }
+        .header-info { display: flex; align-items: center; gap: 1.5rem; }
+        .plan-info { text-align: right; font-size: 0.8rem; }
+        .plan-info span { color: var(--text-muted); }
+        
+        main { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; }
+
+        .card {
+            background-color: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+             transform: translateY(-5px);
+             box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+        .card-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .card-header h2 { font-size: 1.1rem; font-weight: 500; }
+        .card-header .tabs { display: flex; gap: 1rem; margin-top: 1rem; }
+        
+        /* --- COMPONENTES --- */
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-weight: 500; }
+        input[type="text"], input[type="password"], textarea {
+            width: 100%; padding: 0.75rem 1rem; background-color: var(--bg-dark);
+            border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem;
+            color: var(--text-color); transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(94, 92, 230, 0.3); }
+        textarea { min-height: 100px; resize: vertical; }
+
+        .btn {
+            display: inline-flex; justify-content: center; align-items: center; gap: 0.5rem;
+            width: 100%; padding: 0.75rem 1rem; background-color: var(--primary);
+            border: none; border-radius: 8px; color: #fff; font-size: 1rem; font-weight: 500;
+            cursor: pointer; text-align: center; transition: background-color 0.2s, transform 0.2s;
+        }
+        .btn .spinner {
+            display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        .btn.loading .spinner { display: block; }
+        .btn.loading .btn-text { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .btn:hover:not(:disabled) { background-color: #4a48c4; transform: scale(1.02); }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .btn-secondary { background: var(--bg-light); border: 1px solid var(--border-color); color: var(--text-color); }
+        .btn-secondary:hover:not(:disabled) { background-color: #3a3d45; }
+        .btn-logout { background-color: var(--danger); padding: 0.5rem 1rem; font-size: 0.9rem; width: auto; }
+        .btn-logout:hover { background-color: #c43030; }
+
+        .tab-button {
+            background: none; border: none; color: var(--text-muted); cursor: pointer;
+            padding: 0.5rem 0; position: relative; font-weight: 500; transition: color 0.2s;
+        }
+        .tab-button.active { color: var(--text-color); }
+        .tab-button.active::after {
+            content: ''; position: absolute; bottom: -1px; left: 0; width: 100%;
+            height: 2px; background-color: var(--primary);
+        }
+        .tab-content { display: none; } .tab-content.active { display: block; }
+        
+        .input-group { display: flex; gap: 1rem; }
+        
+        .file-upload-wrapper { display: flex; gap: 1rem; margin-bottom: 1rem; }
+        #accountFile { display: none; }
+        .file-label {
+            flex-grow: 1; padding: 0.75rem 1rem; background: var(--bg-dark); border: 1px solid var(--border-color);
+            border-radius: 8px; cursor: pointer; color: var(--text-muted); white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; transition: background-color 0.2s;
+        }
+        .file-label:hover { background-color: #1f2128; }
+
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .stat-item { background: var(--bg-dark); padding: 1rem; border-radius: 8px; text-align: center; }
+        .stat-item span { display: block; font-size: 1.25rem; font-weight: 600; }
+        .stat-item .label { font-size: 0.8rem; color: var(--text-muted); }
+        .stat-item .value-success { color: var(--success); }
+        .stat-item .value-danger { color: var(--danger); }
+        
+        /* --- ESTRUTURAS DE CONTEÚDO --- */
+        #accounts-list { max-height: 200px; overflow-y: auto; padding-right: 10px; }
+        .account-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background-color: var(--bg-dark); border-radius: 6px; margin-bottom: 0.5rem; }
+        .account-item span { font-family: monospace; font-size: 0.9rem; }
+        .delete-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; transition: color 0.2s; }
+        .delete-btn:hover { color: var(--danger); }
+        
+        .logs-table-container { max-height: 400px; overflow-y: auto; }
+        #logs-table { width: 100%; border-collapse: collapse; }
+        #logs-table th, #logs-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        #logs-table th { font-weight: 500; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; }
+        #logs-table tbody tr:hover { background-color: var(--bg-dark); }
+        
+        #status {
+            position: fixed; bottom: 20px; left: 50%; padding: 0.75rem 1.5rem;
+            border-radius: 8px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 100;
+            opacity: 0; visibility: hidden; transition: all 0.3s; transform: translateX(-50%) translateY(10px);
+        }
+        #status.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+        .status.success { background-color: var(--success); color: #fff; }
+        .status.error { background-color: var(--danger); color: #fff; }
+        .status.loading { background-color: var(--primary); color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div id="loginSection">
+        <div class="login-box">
+            <h1>Acesso ao Painel</h1>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="sellerName">Nome do Vendedor</label>
+                    <input type="text" id="sellerName" required placeholder="Ex: knt-store">
+                </div>
+                <div class="form-group">
+                    <label for="sellerKey">Chave de Acesso</label>
+                    <input type="password" id="sellerKey" required placeholder="••••••••••••">
+                </div>
+                <button type="submit" class="btn" id="loginBtn">
+                    <div class="spinner"></div> <span class="btn-text">Entrar</span>
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div id="panelSection">
+            <header>
+                <h1 id="welcomeMessage">Painel do Revendedor</h1>
+                <div class="header-info">
+                    <div class="plan-info">
+                        Plano expira em:<br>
+                        <strong>11/10/2025 (em 26 dias)</strong>
+                    </div>
+                    <button class="btn btn-logout" id="logoutBtn">Sair</button>
+                </div>
+            </header>
+    
+            <main>
+                <section class="card" id="send-card">
+                    <div class="card-header">
+                        <h2>Enviar</h2>
+                        <div class="tabs">
+                            <button class="tab-button active" data-tab="pass">Passe</button>
+                            <button class="tab-button" data-tab="box">Caixa</button>
+                            <button class="tab-button" data-tab="others">Outros</button>
+                        </div>
+                    </div>
+                    <div class="tab-content active" id="pass-content">
+                        <form id="sendPassForm">
+                            <div class="form-group">
+                                <label for="playerId">ID do cliente</label>
+                                <input type="text" id="playerId" required placeholder="Ex: 9016703248" inputmode="numeric">
+                            </div>
+                            <div class="form-group">
+                                <label for="message">Mensagem (opcional)</label>
+                                <textarea id="message" placeholder="Aqui está seu passe! Aproveite e boa sorte!"></textarea>
+                            </div>
+                            <button type="submit" class="btn" id="sendPassBtn">
+                                <div class="spinner"></div><span class="btn-text">Enviar Passe</span>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="tab-content" id="box-content"><p style="color: var(--text-muted)">Funcionalidade para enviar Caixas em desenvolvimento.</p></div>
+                    <div class="tab-content" id="others-content"><p style="color: var(--text-muted)">Funcionalidade para enviar Outros itens em desenvolvimento.</p></div>
+                </section>
+                
+                <section class="card" id="accounts-card">
+                    <div class="card-header"> <h2>Contas</h2> </div>
+                    <div id="accounts-list">
+                         <p class="text-muted" style="color: var(--text-muted); margin-bottom: 1.5rem;">Nenhuma conta cadastrada ainda.</p>
+                    </div>
+                    <h3 style="margin-top: 1.5rem; margin-bottom: 1rem; font-weight: 500;">Adicionar nova conta</h3>
+                    <form id="addAccountSingleForm">
+                        <div class="input-group">
+                            <input type="text" id="uid" required placeholder="UID">
+                            <input type="text" id="password" required placeholder="Senha">
+                            <button type="submit" class="btn" id="addSingleBtn" style="width: auto; flex-shrink: 0;">
+                                <div class="spinner"></div><span class="btn-text">Adicionar</span>
+                            </button>
+                        </div>
+                    </form>
+                </section>
+    
+                <section class="card" id="bulk-add-card" style="grid-column: 1 / -1;">
+                    <div class="card-header"> <h2>Adicionar em massa (arquivo)</h2> </div>
+                    <form id="addAccountsBulkForm">
+                        <div class="file-upload-wrapper">
+                            <label for="accountFile" class="file-label" id="file-name-label">Escolher arquivo</label>
+                            <input type="file" id="accountFile" accept=".txt" required>
+                            <button type="button" class="btn btn-secondary" id="clearFileBtn">Limpar</button>
+                            <button type="submit" class="btn" id="addBulkBtn">
+                                <div class="spinner"></div><span class="btn-text">Enviar em massa</span>
+                            </button>
+                        </div>
+                    </form>
+                    <div class="stats">
+                        <div class="stat-item"> <span id="foundCount">0</span> <div class="label">Encontradas</div> </div>
+                        <div class="stat-item"> <span class="value-success" id="successCount">0</span> <div class="label">Sucesso</div> </div>
+                        <div class="stat-item"> <span class="value-danger" id="failCount">0</span> <div class="label">Falha</div> </div>
+                    </div>
+                </section>
+
+                <section class="card" id="logs-card" style="grid-column: 1 / -1;">
+                     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2>Logs</h2>
+                        <button class="btn btn-secondary" id="refreshLogsBtn" style="width: auto;">
+                           <div class="spinner"></div><span class="btn-text">Atualizar</span>
+                        </button>
+                    </div>
+                    <div class="logs-table-container">
+                        <table id="logs-table">
+                            <thead><tr><th>Data</th><th>Tipo</th><th>Detalhes</th></tr></thead>
+                            <tbody id="logs-tbody">
+                                <tr><td colspan="3" style="text-align: center; padding: 1rem; color: var(--text-muted);">Nenhum log encontrado.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+    
+    <div id="status"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const loginSection = document.getElementById('loginSection');
+        const panelSection = document.getElementById('panelSection');
+        const statusDiv = document.getElementById('status');
+        const API_ENDPOINT = '/api/vendedores';
+        
+        // Armazenamento local simulado para UI
+        let localAccounts = [];
+        let localLogs = [];
+
+        // --- LÓGICA DE LOGIN/LOGOUT ---
+        const checkLogin = () => {
+            const sellerName = localStorage.getItem('sellerName');
+            if (sellerName) {
+                document.getElementById('welcomeMessage').textContent = `Painel de ${sellerName}`;
+                loginSection.style.display = 'none';
+                panelSection.style.display = 'block';
+            } else {
+                loginSection.style.display = 'flex';
+                panelSection.style.display = 'none';
+            }
+        };
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const sellerName = document.getElementById('sellerName').value.trim();
+            const sellerKey = document.getElementById('sellerKey').value.trim();
+            
+            setButtonLoading(btn, true);
+            showStatus('loading', 'Verificando...');
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'login', seller_name: sellerName, seller_key: sellerKey })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message);
+
+                localStorage.setItem('sellerName', sellerName);
+                localStorage.setItem('sellerKey', sellerKey);
+                hideStatus();
+                checkLogin();
+            } catch (error) {
+                showStatus('error', `Erro: ${error.message}`);
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        });
+        
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            localAccounts = []; localLogs = [];
+            renderAccounts(); renderLogs();
+            checkLogin();
+        });
+        
+        // --- LÓGICA DAS ABAS ---
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const card = button.closest('.card');
+                card.querySelectorAll('.tab-button, .tab-content').forEach(el => el.classList.remove('active'));
+                button.classList.add('active');
+                document.getElementById(`${button.dataset.tab}-content`).classList.add('active');
+            });
+        });
+
+        // --- RENDERIZAÇÃO DA UI ---
+        const renderAccounts = () => {
+            const listDiv = document.getElementById('accounts-list');
+            listDiv.innerHTML = '';
+            if (localAccounts.length === 0) {
+                listDiv.innerHTML = '<p class="text-muted" style="color: var(--text-muted); margin-bottom: 1.5rem;">Nenhuma conta cadastrada ainda.</p>';
+            } else {
+                localAccounts.forEach((acc, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'account-item';
+                    item.innerHTML = `<span>UID: ${acc.uid}</span>
+                                    <button class="delete-btn" data-index="${index}" title="Remover conta (apenas da lista visual)">&times;</button>`;
+                    listDiv.appendChild(item);
+                });
+            }
+        };
+
+        const renderLogs = () => {
+            const tbody = document.getElementById('logs-tbody');
+            tbody.innerHTML = '';
+            const logsToRender = localLogs.length > 0 ? localLogs : [{ date: new Date(), type: 'INFO', details: 'Nenhum log encontrado.' }];
+            
+            if(localLogs.length === 0){
+                 tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 1rem; color: var(--text-muted);">Nenhum log encontrado.</td></tr>';
+                 return;
+            }
+
+            logsToRender.slice().reverse().forEach(log => {
+                const row = document.createElement('tr');
+                const date = new Date(log.date);
+                const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+                row.innerHTML = `<td>${formattedDate}</td>
+                                 <td><span style="color: ${log.type === 'ERRO' ? 'var(--danger)' : 'var(--success)'}; font-weight: 500;">${log.type}</span></td>
+                                 <td>${log.details}</td>`;
+                tbody.appendChild(row);
+            });
+        };
+
+        // --- MANIPULADOR GERAL DE API ---
+        async function handleApiRequest(action, body, btn) {
+            const sellerKey = localStorage.getItem('sellerKey');
+            if (btn) setButtonLoading(btn, true);
+            showStatus('loading', 'Processando...');
+            
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sellerKey}`},
+                    body: JSON.stringify({ action, ...body })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message);
+                
+                addLog('SUCESSO', `Ação '${action}' executada: ${data.message}`);
+                return data;
+            } catch (error) {
+                addLog('ERRO', `Ação '${action}': ${error.message}`);
+                showStatus('error', `Erro: ${error.message}`);
+                return null;
+            } finally {
+                if (btn) setButtonLoading(btn, false);
+            }
+        }
+
+        // --- FORMULÁRIOS E AÇÕES ---
+        document.getElementById('sendPassForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                player_id: document.getElementById('playerId').value.trim(),
+                message: document.getElementById('message').value.trim()
+            };
+            const result = await handleApiRequest('send-pass', body, e.target.querySelector('button'));
+            if (result) {
+                showStatus('success', result.message);
+                e.target.reset();
+            }
+        });
+
+        document.getElementById('addAccountSingleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = { uid: document.getElementById('uid').value.trim(), password: document.getElementById('password').value.trim() };
+            const result = await handleApiRequest('add-account-single', body, e.target.querySelector('button'));
+            if (result) {
+                showStatus('success', result.message);
+                localAccounts.push(body);
+                renderAccounts();
+                e.target.reset();
+            }
+        });
+        
+        document.getElementById('accounts-list').addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-btn')) {
+                const index = parseInt(e.target.dataset.index, 10);
+                localAccounts.splice(index, 1);
+                renderAccounts();
+            }
+        });
+        
+        const fileInput = document.getElementById('accountFile');
+        fileInput.addEventListener('change', () => {
+            document.getElementById('file-name-label').textContent = fileInput.files[0] ? fileInput.files[0].name : 'Escolher arquivo';
+        });
+
+        document.getElementById('clearFileBtn').addEventListener('click', () => {
+            fileInput.value = '';
+            document.getElementById('file-name-label').textContent = 'Escolher arquivo';
+            Object.values(document.querySelectorAll('.stat-item span')).forEach(el => el.textContent = '0');
+        });
+
+        document.getElementById('addAccountsBulkForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = fileInput.files[0];
+            if (!file) return showStatus('error', 'Selecione um arquivo .txt');
+            
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const fileContent = event.target.result;
+                document.getElementById('foundCount').textContent = fileContent.split('\n').filter(Boolean).length;
+                const result = await handleApiRequest('add-accounts-bulk', { fileContent }, e.target.querySelector('#addBulkBtn'));
+                if (result) {
+                    showStatus('success', `${result.message}`);
+                    document.getElementById('successCount').textContent = result.added;
+                    document.getElementById('failCount').textContent = result.errors;
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        document.getElementById('refreshLogsBtn').addEventListener('click', (e) => {
+            setButtonLoading(e.currentTarget, true);
+            showStatus('loading', 'Atualizando logs...');
+            setTimeout(() => {
+                renderLogs();
+                showStatus('success', 'Logs atualizados.');
+                setButtonLoading(e.currentTarget, false);
+            }, 1000);
+        });
+        
+        document.getElementById('playerId').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g, ''); });
+
+        // --- FUNÇÕES UTILITÁRIAS ---
+        const addLog = (type, details) => {
+            localLogs.push({ date: new Date(), type, details });
+            renderLogs();
+        };
+
+        const setButtonLoading = (btn, isLoading) => {
+            if (btn) {
+                btn.classList.toggle('loading', isLoading);
+                btn.disabled = isLoading;
+            }
+        };
+
+        let statusTimeout;
+        const showStatus = (type, message) => {
+            clearTimeout(statusTimeout);
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            statusDiv.classList.add('show');
+            if (type !== 'loading') {
+                statusTimeout = setTimeout(hideStatus, 4000);
+            }
+        };
+        const hideStatus = () => { statusDiv.classList.remove('show'); };
+
+        // --- INICIALIZA A PÁGINA ---
+        checkLogin();
+        renderAccounts();
+        renderLogs();
+    });
+</script>
+
+</body>
+</html>
+
